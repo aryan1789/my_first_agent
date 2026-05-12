@@ -1,4 +1,4 @@
-from google.adk.agents import Agent
+from google.adk.agents import Agent, ParallelAgent
 
 # Mock tools (same as before — fine for learning)
 def get_weather(city: str) -> dict:
@@ -25,16 +25,15 @@ time_agent = Agent(
     tools=[get_current_time],
 )
 
-# Coordinator: delegates to specialists
+parallel_specialists = ParallelAgent(
+    name="parallel_specialists",
+    sub_agents=[weather_agent, time_agent],
+)
+
 root_agent = Agent(
     name="my_agent",
-    model="gemini-2.5-flash",
-    description="A coordinator that routes questions to specialists.",
-    instruction=(
-        "You are a coordinator. "
-        "Delegate weather questions to weather_agent. "
-        "Delegate time questions to time_agent. "
-        "If a question needs both, delegate to both."
-    ),
-    sub_agents=[weather_agent, time_agent],
+    model="gemini-2.5-flash-lite",
+    description="A coordinator.",
+    instruction="Delegate to parallel_specialists for any weather or time question. Then summarize their results for the user.",
+    sub_agents=[parallel_specialists],
 )
